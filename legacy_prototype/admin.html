@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saan Voice - Admin Control Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-primary: #080C1E;
+            --bg-secondary: #101732;
+            --bg-glass: rgba(16, 23, 50, 0.55);
+            --border-glass: rgba(255, 255, 255, 0.06);
+            --border-glass-glow: rgba(0, 210, 255, 0.2);
+            
+            --accent-cyan: #00D2FF;
+            --accent-teal: #00E5FF;
+            --accent-purple: #7B2CBF;
+            --success-green: #00E676;
+            --warning-gold: #FFB300;
+            --danger-red: #FF1744;
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --shadow-glow: 0 8px 32px 0 rgba(0, 210, 255, 0.12);
+            --shadow-panel: 0 12px 40px rgba(0, 0, 0, 0.45);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-main);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow background */
+        .bg-glow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -100;
+            overflow: hidden;
+            pointer-events: none;
+            background: linear-gradient(135deg, #060918, #0a0f27, #040610);
+        }
+        .bg-grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.8;
+        }
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.6;
+            mix-blend-mode: screen;
+        }
+        .bg-glow-1 {
+            top: -20%;
+            left: -10%;
+            width: 750px;
+            height: 750px;
+            background: radial-gradient(circle, rgba(123, 44, 191, 0.2) 0%, transparent 70%);
+        }
+        .bg-glow-2 {
+            bottom: -20%;
+            right: -10%;
+            width: 850px;
+            height: 850px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.18) 0%, transparent 70%);
+        }
+
+        /* Toast Container */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .toast {
+            background: rgba(13, 21, 39, 0.9);
+            border-left: 4px solid var(--accent-cyan);
+            backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            border-radius: 8px;
+            min-width: 320px;
+            box-shadow: var(--shadow-panel);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            animation: slideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.success { border-left-color: var(--success-green); }
+        .toast.error { border-left-color: var(--danger-red); }
+        @keyframes slideIn { to { transform: translateX(0); } }
+
+        /* Login Portal overlay */
+        #login-portal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10000;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: linear-gradient(135deg, #060918, #0a0f27, #040610);
+            transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease;
+        }
+        #login-portal.hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .login-left {
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: radial-gradient(circle at 10% 20%, rgba(123, 44, 191, 0.12) 0%, transparent 60%);
+            border-right: 1px solid var(--border-glass);
+        }
+        .login-hero h2 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ffffff, var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(13, 21, 39, 0.5);
+            border: 1px solid rgba(123, 44, 191, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: rgba(13, 21, 39, 0.85);
+            border-right: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        .logo-icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: 1px solid transparent;
+        }
+        .nav-item.active {
+            color: var(--text-primary);
+            background: rgba(123, 44, 191, 0.12);
+            border: 1px solid rgba(123, 44, 191, 0.25);
+        }
+
+        /* Main Dashboard Panel */
+        .main-content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 40px;
+            max-width: 1400px;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
+        }
+        .page-info h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .glass-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: var(--shadow-panel);
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+        .glass-card:hover {
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        /* Overview stats */
+        .stat-card {
+            grid-column: span 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 8px 0;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Action Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .btn-danger {
+            background: rgba(255, 23, 68, 0.15);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            color: var(--danger-red);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .btn-danger:hover {
+            background: var(--danger-red);
+            color: white;
+        }
+        .btn-success {
+            background: rgba(0, 230, 118, 0.15);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: var(--success-green);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .btn-success:hover {
+            background: var(--success-green);
+            color: black;
+        }
+
+        /* Lists & Tables styling */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+        .admin-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .admin-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: var(--text-primary);
+        }
+        .admin-table tbody tr:hover {
+            background: rgba(255,255,255,0.01);
+        }
+
+        /* Status badges */
+        .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .badge.active { background: rgba(0, 230, 118, 0.12); color: var(--success-green); border: 1px solid var(--success-green); }
+        .badge.suspended { background: rgba(255, 23, 68, 0.12); color: var(--danger-red); border: 1px solid var(--danger-red); }
+        .badge.pending { background: rgba(255, 179, 0, 0.12); color: var(--warning-gold); border: 1px solid var(--warning-gold); }
+        .badge.approved { background: rgba(0, 210, 255, 0.12); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+
+        /* Document OCR preview pane */
+        .doc-review-pane {
+            background: #050811;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            color: var(--accent-teal);
+            height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            margin-top: 15px;
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+        .form-input {
+            width: 100%;
+            background: rgba(13, 21, 39, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar { width: 80px; padding: 25px 10px; align-items: center; }
+            .logo-text, .nav-item span { display: none; }
+            .main-content { margin-left: 80px; }
+            .stat-card { grid-column: span 6; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient themed glow -->
+    <div class="bg-glow-container">
+        <div class="bg-grid-overlay"></div>
+        <div class="bg-glow bg-glow-1"></div>
+        <div class="bg-glow bg-glow-2"></div>
+    </div>
+
+    <!-- Toast Notification alerts -->
+    <div id="toast-container"></div>
+
+    <!-- Admin Login Screen -->
+    <div id="login-portal">
+        <div class="bg-glow-container">
+            <div class="bg-grid-overlay"></div>
+            <div class="bg-glow bg-glow-1"></div>
+        </div>
+        
+        <div class="login-left">
+            <div class="logo-section">
+                <i class="fa-solid fa-microphone-lines logo-icon"></i>
+                <span style="font-size: 22px; font-weight: 800; letter-spacing: 1px;">SAAN CONTROL</span>
+            </div>
+            <div class="login-hero">
+                <h2>Administrative Management Panel</h2>
+                <p>Verify applicant documents, override automated FX rate locks, approve emergency claims, and configure user permissions globally.</p>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">
+                Saan Administrator Gateway &copy; 2026. SECURE ROUTE.
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
+            <div class="login-card">
+                <div style="margin-bottom: 25px;">
+                    <h3 style="font-size: 24px; font-weight: 700; color: white;">Admin Sign In</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Authentication token required</p>
+                </div>
+                
+                <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">Admin Email</label>
+                        <input type="email" class="form-input" id="admin-email" required value="admin@saanpay.co.uk">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="admin-password" required value="admin123">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; height: 46px; font-size: 14px;">
+                        <span><i class="fa-solid fa-shield-halved" style="margin-right: 6px;"></i> Authenticate Admin</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div>
+            <div class="logo-section">
+                <i class="fa-solid fa-microphone-lines logo-icon"></i>
+                <span class="logo-text">SAAN CONTROL</span>
+            </div>
+            
+            <nav class="nav-links">
+                <div class="nav-item active">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Management Console</span>
+                </div>
+            </nav>
+        </div>
+
+        <div style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 20px;">
+            <div>Admin Module v1.2</div>
+            <div style="color: var(--accent-purple); font-weight: 600; margin-top: 4px;"><i class="fa-solid fa-key"></i> MASTER ACCESS</div>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-info">
+                <h1>Platform Control Center</h1>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Global overview of borrower accounts, emergency verifications, and system ledger logs</p>
+            </div>
+            <button class="btn-secondary" onclick="logoutAdmin()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+        </div>
+
+        <!-- Metric summaries -->
+        <div class="dashboard-grid">
+            <div class="glass-card stat-card">
+                <div class="stat-label">Total Disbursements</div>
+                <div class="stat-value" id="stat-disbursed">£300.00</div>
+                <div style="font-size: 11px; color: var(--text-secondary);"><i class="fa-solid fa-arrow-trend-up trend-up"></i> Disbursed Loans</div>
+            </div>
+            <div class="glass-card stat-card">
+                <div class="stat-label">Total Recovered</div>
+                <div class="stat-value" style="color: var(--success-green);" id="stat-recovered">£216.00</div>
+                <div style="font-size: 11px; color: var(--text-secondary);">Recovery progress: 72%</div>
+            </div>
+            <div class="glass-card stat-card">
+                <div class="stat-label">Pending Claim Audits</div>
+                <div class="stat-value" style="color: var(--warning-gold);" id="stat-pending-claims">0</div>
+                <div style="font-size: 11px; color: var(--text-secondary);">Awaiting invoice verify</div>
+            </div>
+            <div class="glass-card stat-card">
+                <div class="stat-label">Active Users</div>
+                <div class="stat-value" style="color: var(--accent-cyan);" id="stat-active-users">4</div>
+                <div style="font-size: 11px; color: var(--text-secondary);">Nodes: UK, IN, UAE, CA</div>
+            </div>
+        </div>
+
+        <!-- Main management tables -->
+        <div class="dashboard-grid">
+            
+            <!-- Users Account Management -->
+            <div class="glass-card" style="grid-column: span 7;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-users" style="color: var(--accent-purple); margin-right: 8px;"></i> Registered User Accounts</h3>
+                    <span class="badge active">Database Online</span>
+                </div>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Role / Node</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Emergency claims approval card -->
+            <div class="glass-card" style="grid-column: span 5; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-stamp" style="color: var(--warning-gold); margin-right: 8px;"></i> Emergency claim Auditor</h3>
+                    </div>
+                    
+                    <div id="no-claims-placeholder" style="text-align: center; padding: 40px 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-circle-check" style="font-size: 36px; color: var(--success-green); margin-bottom: 12px;"></i>
+                        <p style="font-size: 13px;">No pending emergency payout claims.</p>
+                    </div>
+
+                    <div id="active-claim-review" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                            <div><strong>Applicant:</strong> <span id="review-user-name"></span></div>
+                            <span class="badge pending" id="review-risk-score">Low Risk</span>
+                        </div>
+                        <div style="font-size: 13px; margin-bottom: 12px;">
+                            <strong>Category:</strong> <span id="review-category"></span> | 
+                            <strong>Amount:</strong> <span style="color: var(--accent-teal); font-weight: 700;" id="review-amount"></span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 10px;">
+                            <strong>Context:</strong> <span id="review-context"></span>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Extracted OCR Text:</div>
+                        <div class="doc-review-pane" id="review-ocr-content"></div>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button class="btn-success" style="flex: 1; padding: 10px;" onclick="approveActiveClaim()">
+                                <i class="fa-solid fa-check"></i> Approve & Disburse
+                            </button>
+                            <button class="btn-danger" style="flex: 1; padding: 10px;" onclick="rejectActiveClaim()">
+                                <i class="fa-solid fa-xmark"></i> Reject Claim
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Transaction Ledger logs -->
+            <div class="glass-card" style="grid-column: span 12;">
+                <div style="margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-receipt" style="color: var(--accent-cyan); margin-right: 8px;"></i> Global Operations Transaction Ledger</h3>
+                </div>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Initiator</th>
+                            <th>Operation Type</th>
+                            <th>Amount (GBP)</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-table-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Administrative Scripts -->
+    <script>
+        let currentActiveClaimId = null;
+
+        function loadSaanDb() {
+            let db = localStorage.getItem('saan_db');
+            return db ? JSON.parse(db) : null;
+        }
+
+        function saveSaanDb(db) {
+            localStorage.setItem('saan_db', JSON.stringify(db));
+        }
+
+        function playSuccessChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (Ascending chord)
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.08);
+                    gain.gain.setValueAtTime(0.12, now + index * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.08 + 0.6);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + index * 0.08);
+                    osc.stop(now + index * 0.08 + 0.6);
+                });
+            } catch (e) {}
+        }
+
+        function playFailureChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.35);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } catch (e) {}
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><div>${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-password').value;
+
+            if (email === 'admin@saanpay.co.uk' && pass === 'admin123') {
+                playSuccessChime();
+                showToast("Admin access authenticated. Welcome back.", "success");
+                document.getElementById('login-portal').classList.add('hidden');
+                sessionStorage.setItem('saan_admin_auth', 'true');
+                renderAdminDashboard();
+            } else {
+                playFailureChime();
+                showToast("Invalid administrative token credentials.", "error");
+            }
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('saan_admin_auth');
+            location.reload();
+        }
+
+        function renderAdminDashboard() {
+            const db = loadSaanDb();
+            if (!db) return;
+
+            // 1. Render Metrics
+            const totalDisbursed = db.users.reduce((acc, u) => acc + (u.role === 'user' ? u.balance : 0), 0);
+            const totalRecovered = db.users.reduce((acc, u) => acc + (u.role === 'user' ? u.paid : 0), 0);
+            
+            document.getElementById('stat-disbursed').innerText = `£${totalDisbursed.toFixed(2)}`;
+            document.getElementById('stat-recovered').innerText = `£${totalRecovered.toFixed(2)}`;
+            
+            const pendingClaims = db.emergencies.filter(e => e.status === 'Awaiting Approval');
+            document.getElementById('stat-pending-claims').innerText = pendingClaims.length;
+
+            // 2. Render Users Table
+            const usersTableBody = document.getElementById('users-table-body');
+            usersTableBody.innerHTML = '';
+            
+            db.users.forEach(u => {
+                const statusBadge = u.status === 'Active' 
+                    ? `<span class="badge active"><i class="fa-solid fa-circle-check"></i> Active</span>`
+                    : `<span class="badge suspended"><i class="fa-solid fa-ban"></i> Suspended</span>`;
+                
+                const actionBtn = u.status === 'Active'
+                    ? `<button class="btn-danger" onclick="toggleUserStatus('${u.id}', 'Suspended')">Suspend</button>`
+                    : `<button class="btn-success" style="padding: 6px 12px; font-size:12px;" onclick="toggleUserStatus('${u.id}', 'Active')">Activate</button>`;
+                
+                // Show balance only if they have loan
+                const balanceDisplay = u.role === 'user' ? `£${u.balance.toFixed(2)}` : 'N/A';
+
+                usersTableBody.innerHTML += `
+                    <tr>
+                        <td><strong>${u.name}</strong><br><span style="color:var(--text-muted); font-size:11px;">${u.email}</span></td>
+                        <td>${u.role.toUpperCase()} (${u.country})</td>
+                        <td>${balanceDisplay}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            });
+
+            // 3. Render Emergency claim review board
+            const reviewerPane = document.getElementById('active-claim-review');
+            const placeholder = document.getElementById('no-claims-placeholder');
+            
+            if (pendingClaims.length > 0) {
+                placeholder.style.display = 'none';
+                reviewerPane.style.display = 'block';
+                
+                // Load first claim automatically if none selected or if selected is not pending anymore
+                let activeClaim = pendingClaims.find(e => e.id === currentActiveClaimId);
+                if (!activeClaim) {
+                    activeClaim = pendingClaims[0];
+                    currentActiveClaimId = activeClaim.id;
+                }
+
+                document.getElementById('review-user-name').innerText = activeClaim.user;
+                document.getElementById('review-category').innerText = activeClaim.type.toUpperCase();
+                document.getElementById('review-amount').innerText = `£${activeClaim.amount.toFixed(2)}`;
+                document.getElementById('review-context').innerText = activeClaim.desc;
+                document.getElementById('review-ocr-content').innerText = activeClaim.documentText;
+            } else {
+                reviewerPane.style.display = 'none';
+                placeholder.style.display = 'block';
+                currentActiveClaimId = null;
+            }
+
+            // 4. Render Transaction Ledger
+            const ledgerBody = document.getElementById('ledger-table-body');
+            ledgerBody.innerHTML = '';
+            
+            // Render latest logs first
+            [...db.transfers].reverse().forEach(t => {
+                const statusBadge = `<span class="badge active"><i class="fa-solid fa-circle-check"></i> Success</span>`;
+                ledgerBody.innerHTML += `
+                    <tr>
+                        <td><span style="font-family:'Consolas', monospace; color:var(--accent-cyan);">${t.id}</span></td>
+                        <td><strong>${t.user}</strong></td>
+                        <td>${t.type}</td>
+                        <td>£${t.amount.toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${t.date}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleUserStatus(userId, newStatus) {
+            const db = loadSaanDb();
+            const user = db.users.find(u => u.id === userId);
+            if (user) {
+                user.status = newStatus;
+                saveSaanDb(db);
+                renderAdminDashboard();
+                showToast(`User account for ${user.name} was ${newStatus.toLowerCase()}!`, newStatus === 'Active' ? 'success' : 'error');
+            }
+        }
+
+        function approveActiveClaim() {
+            if (!currentActiveClaimId) return;
+
+            const db = loadSaanDb();
+            const claim = db.emergencies.find(e => e.id === currentActiveClaimId);
+            if (claim) {
+                claim.status = 'Approved';
+                
+                // Update Rushi's outstanding loan
+                const rushi = db.users.find(u => u.id === 'rushi');
+                if (rushi) {
+                    rushi.balance += claim.amount;
+                }
+
+                // Add transfer ledger item
+                db.transfers.push({
+                    id: 'tr-' + (db.transfers.length + 1).toString().padStart(3, '0'),
+                    user: 'Rushi Patel',
+                    type: 'Emergency Payout Approved',
+                    amount: claim.amount,
+                    currency: 'GBP',
+                    status: 'Completed',
+                    date: 'Just Now'
+                });
+
+                saveSaanDb(db);
+                playSuccessChime();
+                showToast(`Claim ${claim.id} approved! £${claim.amount} payout released to client account.`, 'success');
+                renderAdminDashboard();
+            }
+        }
+
+        function rejectActiveClaim() {
+            if (!currentActiveClaimId) return;
+
+            const db = loadSaanDb();
+            const claim = db.emergencies.find(e => e.id === currentActiveClaimId);
+            if (claim) {
+                claim.status = 'Rejected';
+
+                // Add transfer ledger item (failed claim notice)
+                db.transfers.push({
+                    id: 'tr-' + (db.transfers.length + 1).toString().padStart(3, '0'),
+                    user: 'Rushi Patel',
+                    type: 'Emergency Claim Rejected',
+                    amount: claim.amount,
+                    currency: 'GBP',
+                    status: 'Rejected',
+                    date: 'Just Now'
+                });
+
+                saveSaanDb(db);
+                playFailureChime();
+                showToast(`Claim ${claim.id} rejected by administrator.`, 'error');
+                renderAdminDashboard();
+            }
+        }
+
+        // Load listener & Storage state triggers
+        window.addEventListener('load', () => {
+            // Check auth token
+            if (sessionStorage.getItem('saan_admin_auth') === 'true') {
+                document.getElementById('login-portal').classList.add('hidden');
+                renderAdminDashboard();
+            }
+
+            // Sync automatically when localStorage changes in another tab
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'saan_db') {
+                    renderAdminDashboard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

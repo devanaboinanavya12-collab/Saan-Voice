@@ -1,0 +1,49 @@
+# Node.js dependencies & builds
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Local Node.js binary folder
+node-bin/
+
+# Databases
+*.db
+*.db-journal
+
+# Environment config / secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python caches & virtualenvs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Agent / Tool logs and media artifacts
+.system_generated/
+.tempmediaStorage/
+browser/
+*.png
+*.webp
+*.log

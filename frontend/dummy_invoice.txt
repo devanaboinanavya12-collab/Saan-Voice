@@ -1,0 +1,9 @@
+SAAN VOICE EMERGENCY MEDICAL INVOICE
+Hospital: City Medical Centre, Delhi
+Patient Name: Rushi
+Category: Emergency Surgery (Appendectomy)
+Total Amount Due: INR 50000 / GBP 500.00
+Status: Unpaid / Emergency
+Signature Check FMC India: Passed
+Doctor FMC Registration: FMC-8921-A
+Timestamp: 2026-06-24
